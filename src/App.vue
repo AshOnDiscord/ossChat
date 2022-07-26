@@ -1,47 +1,46 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
+import Login from "./components/login.vue";
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
-  </header>
-
-  <main>
-    <TheWelcome />
-  </main>
+  <Login v-if="!user" @login="(user) => (user = user)" />
+  <div v-else>
+    <h1>Hello, {{ user.uid }} | {{ user.uid }}</h1>
+    <button @click="logout">Logout</button>
+  </div>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-}
+<script>
+// #region firebase setup
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
+const firebaseConfig = {
+  apiKey: "AIzaSyApnDFVc3CxT2B5GwLc4fmmkzOge90-jvM",
+  authDomain: "osschat-5c54b.firebaseapp.com",
+  projectId: "osschat-5c54b",
+  storageBucket: "osschat-5c54b.appspot.com",
+  messagingSenderId: "1084566090149",
+  appId: "1:1084566090149:web:87c3fb10d837a2fe16384c",
+  measurementId: "G-K119JYEVQT",
+};
 
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const auth = getAuth(app);
+const firestore = getFirestore(app);
+// #endregion
 
-  .logo {
-    margin: 0 2rem 0 0;
-  }
+export default {
+  data() {
+    return {
+      user: null,
+    };
+  },
+};
+</script>
 
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-}
-</style>
+<style></style>
