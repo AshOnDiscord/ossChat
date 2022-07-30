@@ -108,6 +108,7 @@
             <img
               class="h-8 w-8 rounded-full"
               :src="user.avatar || defaultAvatar"
+              :onerror="(e) => fallback(e)"
               alt=""
             />
             <span
@@ -431,6 +432,11 @@ export default {
         username: JSON.parse(message.data().user).username,
         avatar: JSON.parse(message.data().user).avatar,
       };
+    },
+    fallback(e) {
+      console.log(e.currentTarget.src);
+      e.currentTarget.src = this.defaultAvatar;
+      e.currentTarget.onerror = null;
     },
   },
   async mounted() {

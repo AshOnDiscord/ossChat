@@ -24,7 +24,12 @@
         class="flex cursor-pointer items-center gap-1"
         @click="$emit('scroll')"
       >
-        <img class="h-4 w-4 rounded-full" :src="findReply().avatar" alt="" />
+        <img
+          class="h-4 w-4 rounded-full"
+          :src="findReply().avatar"
+          :onerror="(e) => fallback(e)"
+          alt=""
+        />
         <h1>{{ findReply().username }}</h1>
         <p class="truncate">
           {{ findReply().message }}
@@ -36,6 +41,7 @@
     <img
       class="h-12 w-12 rounded-full"
       :src="JSON.parse(message.data().user).avatar || defaultAvatar"
+      :onerror="(e) => fallback(e)"
       alt=""
       v-if="pfpShow"
     />
@@ -249,6 +255,11 @@ export default {
         return false;
       }
       return false;
+    },
+    fallback(e) {
+      console.log(e.currentTarget.src);
+      e.currentTarget.src = this.defaultAvatar;
+      e.currentTarget.onerror = null;
     },
   },
   mounted() {
