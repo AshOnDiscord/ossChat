@@ -17,7 +17,7 @@ import Chat from "./components/Chat.vue";
       @login="makingAcc = false"
     />
   </div>
-  <Chat :user="user" :db="db" v-else />
+  <Chat @logout="logout" :user="user" :db="db" v-else />
 </template>
 
 <script>
