@@ -1,29 +1,14 @@
-# ossChat
+# OSS Chat
 
-This template should help get you started developing with Vue 3 in Vite.
+## Firebase and Vue powered Chat App for OSS
 
-## Recommended IDE Setup
+### Tools
+Reactive - Vue Options API + SFC(no plugins)  
+CSS - Tailwind CSS  
+Icons - Heroicons(FontAwesome as a backup)  
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
+### Formatting
+For formatting `prettier-plugin-tailwindcss` with Prettier is recommened
 
-## Customize configuration
-
-See [Vite Configuration Reference](https://vitejs.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
-```
-
-### Compile and Minify for Production
-
-```sh
-npm run build
-```
+### Styling
+As for styling, Tailwind CSS classes are the perferred ways, with @apply with Tailwind CSS if it is better suited in the case. If a specific style is desired use the Square Brackets syntax (example: `text-[#0d0073]` or `w-[calc(100%_+_5rem)]`). Only if the css rule is not included should normal CSS be used
