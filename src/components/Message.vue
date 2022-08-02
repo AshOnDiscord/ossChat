@@ -4,7 +4,7 @@
     :class="{
       'bg-slate-100': editing,
       'mt-4': pfpShow,
-      'pl-[calc(1.5rem-2px] border-l-2 !border-indigo-400 !bg-indigo-50 hover:!border-indigo-500/90 hover:!bg-indigo-100/75':
+      'border-l-2 !border-indigo-400 !bg-indigo-50 pl-[calc(1.5rem-2px)] hover:!border-indigo-500/90 hover:!bg-indigo-100/75':
         reply === message.id,
       'hover:bg-slate-50': !editing && reply !== message.id,
       'border-l-2 border-yellow-300 bg-yellow-50 pl-[calc(1.5rem-2px)] hover:border-yellow-400 hover:bg-yellow-100/75':
@@ -66,6 +66,7 @@
           style="word-break: break-word"
         >
           {{ message.data().message }}
+          {{ JSON.parse(message.data().edits).length ? "(edited)" : "" }}
         </p>
         <MessageDropdown
           class="MessageDropdown absolute top-0 right-0 hidden"

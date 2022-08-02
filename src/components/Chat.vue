@@ -33,7 +33,7 @@
       <SettingsDropdown @logout="$emit('logout')" />
     </aside>
     <div class="relative w-full overflow-hidden">
-      <main class="h-[calc(100vh-4rem)] w-full overflow-scroll py-6">
+      <main class="h-[calc(100vh-4rem)] w-full overflow-y-scroll py-6">
         <ul class="">
           <li
             v-for="(message, index) in messages"
@@ -190,6 +190,8 @@ export default {
       isInView: false,
       load: true,
       addingChannel: false,
+      // wsUrl: "wss://websocket.ineedaurlffs.tk"
+      wsUrl: "ws://localhost:5000",
     };
   },
   methods: {
@@ -257,6 +259,9 @@ export default {
     swap(channel) {
       this.currentChannel = channel;
       this.setupListener();
+      this.$nextTick(() => {
+        this.resizeText();
+      });
     },
     setupListener() {
       // Firestore listener for messages
@@ -318,7 +323,7 @@ export default {
       const index = this.messages.findIndex((message) => message.id === id);
       const oldMessage = this.messages[index].data().message;
       const edits = JSON.parse(this.messages[index].data().edits);
-      const newEdits = edits.concat(oldMessage);
+      const newEdits = JSON.stringify(edits.concat(oldMessage));
 
       await updateDoc(docRef, {
         message: text,
@@ -473,7 +478,7 @@ export default {
     }
 
     // Websocket to nodejs server for status list and channels
-    this.ws = new WebSocket("wss://websocket.ineedaurlffs.tk");
+    this.ws = new WebSocket(this.wsUrl);
 
     this.ws.addEventListener("open", () => {
       console.log("connected");
