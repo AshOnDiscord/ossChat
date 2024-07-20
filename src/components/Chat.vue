@@ -186,6 +186,8 @@ export default {
       newMessage: "",
       reply: null,
       disconnectListener: null,
+      disconnectChannelListener: null,
+      disconnectUserListener: null,
       defaultAvatar: "https://cdn.discordapp.com/embed/avatars/0.png",
       isInView: false,
       load: true,
@@ -239,7 +241,7 @@ export default {
       }
 
       if (replyDoc) {
-        console.log("eplyDoc.data().user");
+        console.log("replyDoc.data().user");
         const replyAuthor = JSON.parse(replyDoc.data().user).uid;
 
         docData.reply = JSON.stringify({
@@ -258,12 +260,12 @@ export default {
     },
     swap(channel) {
       this.currentChannel = channel;
-      this.setupListener();
+      this.setupMsgListener();
       this.$nextTick(() => {
         this.resizeText();
       });
     },
-    setupListener() {
+    setupMsgListener() {
       // Firestore listener for messages
       if (!this.currentChannel) {
         this.message = [];
@@ -281,13 +283,41 @@ export default {
       );
 
       this.disconnectListener = onSnapshot(q, (querySnapshot) => {
+        // console.log("qs", querySnapshot);
+
         const isInView = this.isInView;
         // console.log(isInView);
         this.$nextTick(() => {
-          this.messages = [];
-          querySnapshot.forEach((doc) => {
-            this.messages.unshift(doc);
-          });
+          this.messages = [
+            ...querySnapshot.docs
+              .map((doc) => {
+                const data = doc.data();
+                if (!data.time) data.time = new Date();
+                const docCopy = {
+                  id: doc.id,
+                  data: () => ({
+                    ...data,
+                  }),
+                  metadata: doc.metadata,
+                  isLocal: doc.metadata.hasPendingWrites,
+                };
+                return docCopy;
+              })
+              .reverse(),
+          ];
+          // querySnapshot.forEach((doc) => {
+          //   if (doc.metadata.hasPendingWrites) {
+          //     this.messages.unshift({
+          //       id: doc.id,
+          //       data: () => ({
+          //         ...doc.data(),
+          //         time: Date.now(),
+          //       }),
+          //       metadata: doc.metadata,
+          //     });
+          //   }
+          //   this.messages.unshift(doc);
+          // });
           // console.log("Messages updated");
           if (isInView || this.load) {
             this.$nextTick(() => {
@@ -478,44 +508,107 @@ export default {
     }
 
     // Websocket to nodejs server for status list and channels
-    this.ws = new WebSocket(this.wsUrl);
+    // this.ws = new WebSocket(this.wsUrl);
 
-    this.ws.addEventListener("open", () => {
-      console.log("connected");
+    // this.ws.addEventListener("open", () => {
+    //   console.log("connected");
 
-      this.ws.send(JSON.stringify({ type: "Creds", uid: this.userData.uid }));
+    //   this.ws.send(JSON.stringify({ type: "Creds", uid: this.userData.uid }));
 
-      this.ws.addEventListener("message", (res) => {
-        console.log(res.data);
-        const data = res.data;
-        try {
-          const dataJson = JSON.parse(data);
+    //   this.ws.addEventListener("message", (res) => {
+    //     console.log(res.data);
+    //     const data = res.data;
+    //     try {
+    //       const dataJson = JSON.parse(data);
 
-          if (dataJson.type == "channels") {
-            console.log("Channels:", dataJson.data);
-            this.channels = dataJson.data;
-          } else if (dataJson.type == "statusList") {
-            const online = dataJson.data.filter(
-              (user) => user.status === "online"
-            );
-            const offline = dataJson.data.filter(
-              (user) => user.status === "offline"
-            );
-            const busy = dataJson.data.filter((user) => user.status === "busy");
+    //       if (dataJson.type == "channels") {
+    //         console.log("Channels:", dataJson.data);
+    //         this.channels = dataJson.data;
+    //       } else if (dataJson.type == "statusList") {
+    //         const online = dataJson.data.filter(
+    //           (user) => user.status === "online"
+    //         );
+    //         const offline = dataJson.data.filter(
+    //           (user) => user.status === "offline"
+    //         );
+    //         const busy = dataJson.data.filter((user) => user.status === "busy");
 
-            this.statusList = online.concat(busy, offline);
-          } else if (dataJson.type == "error") {
-            alert(`ERROR OCCURED: ${dataJson.data}`);
-          }
-        } catch (e) {
-          console.log(e);
-        }
-      });
+    //         this.statusList = online.concat(busy, offline);
+    //       } else if (dataJson.type == "error") {
+    //         alert(`ERROR OCCURED: ${dataJson.data}`);
+    //       }
+    //     } catch (e) {
+    //       console.log(e);
+    //     }
+    //   });
+    // });
+
+    // setup channel listener
+    const channelRef = doc(this.db, "messages", "channelList");
+    this.disconnectChannelListener = onSnapshot(channelRef, (doc) => {
+      this.channels = JSON.parse(doc.data().Channels);
     });
 
-    // this.setupListener();
+    const users = collection(this.db, "users");
+    this.disconnectUserListener = onSnapshot(users, (querySnapshot) => {
+      const statusList = querySnapshot.docs
+        .map((doc) => doc.data())
+        .sort((a, b) => {
+          return a.username.localeCompare(b.username);
+        });
+      this.statusList = [
+        ...statusList.filter((user) => user.status === "online"),
+        ...statusList.filter((user) => user.status !== "online"),
+      ];
+    });
+
+    this.setupMsgListener();
+
     this.resizeText();
     this.isScrollAnchorInView();
+
+    updateDoc(userRef, {
+      status: "online",
+    });
+
+    window.addEventListener("beforeunload", () => {
+      if (!localStorage.getItem("user")) return;
+      fetch(
+        `https://content-firestore.googleapis.com/v1beta1/projects/osschat-5c54b/databases/(default)/documents/users/${this.user.uid}?updateMask.fieldPaths=status`,
+        {
+          credentials: "include",
+          headers: {
+            Authorization:
+              "Bearer ya29.a0AXooCgsQKIWSWX5GULFvN2Cifg-6lGHsjWvubAoM3YwY-u2hS82H86MGg2MNQTJrCs8FZcLRoRkTeEgbGL8NjS4mbB6ciNq4zrRwFqzvflWLkN-qV7dn9f6Ft62EVis29eWzajTb_E42u9y0B0gwY7Em4a-DCJ21lAO0QBb8jQaCgYKAT8SARESFQHGX2Mirl7BsCUmJITIIsCMcOoHbA0177",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            fields: {
+              status: {
+                stringValue: "offline",
+              },
+            },
+          }),
+          method: "PATCH",
+          keepalive: true,
+        }
+      );
+    });
+  },
+  beforeUnmount() {
+    if (this.disconnectListener) {
+      this.disconnectListener();
+    }
+    if (this.disconnectChannelListener) {
+      this.disconnectChannelListener();
+    }
+    if (this.disconnectUserListener) {
+      this.disconnectUserListener();
+    }
+
+    updateDoc(doc(this.db, "users", this.user.uid), {
+      status: "offline",
+    });
   },
 };
 </script>

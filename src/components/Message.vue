@@ -69,7 +69,7 @@
           {{ JSON.parse(message.data().edits).length ? "(edited)" : "" }}
         </p>
         <MessageDropdown
-          class="MessageDropdown absolute top-0 right-0 hidden"
+          class="MessageDropdown absolute right-0 top-0 hidden"
           @reply="$emit('reply')"
           @edit="startEdit"
           @delete="$emit('delete')"
@@ -135,13 +135,19 @@ export default {
   methods: {
     formattedTime() {
       if (this.message.data().time) {
-        const time = this.message.data().time.toDate();
+        // const time = this.message.data().time.toDate();
+        let time;
+        if (this.message.metadata.hasPendingWrites) {
+          time = new Date(this.message.data().time);
+        } else {
+          time = this.message.data().time.toDate();
+        }
 
         const day = time.getDate();
 
         // If message is before yesterday return the date
         if (time < new Date().setDate(new Date().getDate() - 2)) {
-          const month = (time.getMonth() + 1).padStart(2, "0");
+          const month = `${time.getMonth() + 1}`.padStart(2, "0");
           // Get the year (YY) no need for the century
           const year = time.getFullYear().toString().slice(2);
           return `${month}/${day}/${year}`;
@@ -229,32 +235,41 @@ export default {
 
       if (this.message.data().reply) return "2";
 
-      if (this.message.data().time) {
-        const prevMessage = this.messages[this.index - 1];
-        if (!prevMessage) return true;
+      const prevMessage = this.messages[this.index - 1];
+      if (!prevMessage) return true;
 
-        const prevMessageUser = JSON.parse(prevMessage.data().user);
-        const messageUser = JSON.parse(this.message.data().user);
+      const prevMessageUser = JSON.parse(prevMessage.data().user);
+      const messageUser = JSON.parse(this.message.data().user);
 
-        // If the previous message has a different author
-        if (prevMessageUser.username != messageUser.username) {
-          return "3";
-        }
-
-        if (prevMessage.data().time) {
-          const prevMessageDate = prevMessage.data().time.toDate();
-          const prevMessageSeconds = prevMessageDate.getTime() / 1000;
-          const messageDate = this.message.data().time.toDate();
-          const messageSeconds = messageDate.getTime() / 1000;
-
-          // If the time difference is greater than 1 minute return true
-          if (messageSeconds - prevMessageSeconds > 60) {
-            // console.log(messageSeconds - prevMessageSeconds, this.index);
-            return "4";
-          }
-        }
-        return false;
+      // If the previous message has a different author
+      if (prevMessageUser.username != messageUser.username) {
+        return true;
       }
+
+      // if (this.message.data().time && prevMessage.data().time) {
+      // const prevMessageDate = prevMessage.data().time.toDate();
+      let prevMessageDate;
+      if (prevMessage.metadata.hasPendingWrites) {
+        prevMessageDate = new Date(prevMessage.data().time);
+      } else {
+        prevMessageDate = prevMessage.data().time.toDate();
+      }
+      const prevMessageSeconds = prevMessageDate.getTime() / 1000;
+      // const messageDate = this.message.data().time.toDate();
+      let messageDate;
+      if (this.message.metadata.hasPendingWrites) {
+        messageDate = new Date(this.message.data().time);
+      } else {
+        messageDate = this.message.data().time.toDate();
+      }
+      const messageSeconds = messageDate.getTime() / 1000;
+
+      // If the time difference is greater than 2 minute return true
+      if (messageSeconds - prevMessageSeconds > 120) {
+        // console.log(messageSeconds - prevMessageSeconds, this.index);
+        return true;
+      }
+      // }
       return false;
     },
     fallback(e) {

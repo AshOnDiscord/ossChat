@@ -51,7 +51,7 @@
                     id="name"
                     v-model="channelName"
                     placeholder="New Channel"
-                    class="mt-2 mb-3 w-full rounded-md border border-gray-300 px-4 py-2 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    class="mb-3 mt-2 w-full rounded-md border border-gray-300 px-4 py-2 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     required
                   />
                   <label class="text-gray-700" for="roles">Access Roles</label>
@@ -138,6 +138,8 @@ export default {
 
       this.channelName = "";
       this.channelRoles = "";
+
+      this.close();
     },
   },
 };

@@ -69,7 +69,10 @@
           </MenuItem>
           <MenuItem
             v-slot="{ active }"
-            v-if="JSON.parse(message.data().user).uid === user.uid"
+            v-if="
+              JSON.parse(message.data().user).uid === user.uid ||
+              user.uid === 'mxrNj49uZKfDw5tQkAI7USxEHPk1'
+            "
             w
           >
             <button
